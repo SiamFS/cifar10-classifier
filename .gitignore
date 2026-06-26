@@ -7,3 +7,5 @@ models/*.pt
 *.egg-info/
 data/
 *.tar.gz
+circular.txt
+circular_extra.txt
