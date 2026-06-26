@@ -158,14 +158,17 @@ Generates:
 - `results/plots/class_distribution.png` — per-class distribution
 - `results/plots/augmentations.png` — sample augmented training images
 
-## Docker (Optional)
+## Deploy to Hugging Face Spaces (Free)
 
-```bash
-docker build -t cifar10-app .
-docker run -p 7860:7860 cifar10-app
-```
+1. Go to https://huggingface.co/new-space
+2. Name: `cifar10-classifier`, SDK: **Gradio**, License: MIT
+3. Upload these files:
+   - `inference.py`, `model.py`, `config.py`, `utils.py`, `requirements.txt`
+   - `models/best.pt` (upload via Space Files tab)
+4. The Space auto-installs dependencies and launches your app
+5. Share the URL (e.g., `https://huggingface.co/spaces/YOUR_USERNAME/cifar10-classifier`)
 
-Then open `http://localhost:7860` in your browser.
+No credit card required. Stays online 24/7 for free.
 
 ## Results Location
 

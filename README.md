@@ -291,7 +291,6 @@ Cifar_10/
 ├── inference.py            # Web app (Gradio)
 ├── setup.py                # Auto-installer with GPU detection
 ├── SETUP.md                # Step-by-step setup guide
-├── Dockerfile              # For cloud deployment
 ├── requirements.txt         # Python packages
 ├── .gitignore               # Files excluded from git
 ├── models/                  # Saved checkpoints

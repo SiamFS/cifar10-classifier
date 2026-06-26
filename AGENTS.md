@@ -19,7 +19,6 @@ CIFAR-10 image classification project for NITSOL Bangladesh Limited Trainee AI E
 
 ## Nice to Have (from circular)
 - Kaggle-style experimentation logs
-- Docker containerization
 - Deployment on free hosting (Hugging Face Spaces)
 
 ## Environment
@@ -143,7 +142,7 @@ All hyperparameters are in `config.py` — modify there, not in individual scrip
 - **CLI fallback:** `python inference.py <image_path>` for single image
 
 ## Deployment
-- Docker + Gradio inference app
+- Gradio inference app
 - Target: Hugging Face Spaces (free, no credit card, 24/7 uptime)
 - No database, Redis, or external services required
 
@@ -167,6 +166,6 @@ Training accuracy is measured on **aggressively augmented images** (RandAugment 
 ## Security
 - `.gitignore` must exclude: `venv/`, `__pycache__/`, `models/*.pt`, `*.pyc`, `.env`, `data/`, `*.tar.gz`
 - Never commit API keys, tokens, or passwords
-- Gradio `server_name="0.0.0.0"` only in Docker (internal port); set `share=False` by default
+- Gradio `share=False` by default
 - Model weights file (`models/*.pt`) trained locally — no model poisoning risk
 - `setup.py` uses hardcoded commands (nvidia-smi, pip install) — no injection vectors

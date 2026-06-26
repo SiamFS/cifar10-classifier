@@ -82,18 +82,7 @@ Epoch: 001/200 | LR: 0.1000 | Train Loss: 1.2345 | Train Acc: 56.78% | Val Loss:
 - UI: image preview + top-3 predictions as horizontal bar chart + confidence percentages
 - Error handling: invalid path, corrupt image, model not found → user-friendly error
 
-### 7. `Dockerfile`
-```dockerfile
-FROM python:3.10-slim
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY . .
-EXPOSE 7860
-CMD ["python", "inference.py"]
-```
-
-### 8. `.gitignore`
+### 7. `.gitignore`
 ```
 venv/
 __pycache__/
