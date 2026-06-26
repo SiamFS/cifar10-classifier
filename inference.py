@@ -122,7 +122,9 @@ def launch_gradio():
         Confidence < {INFERENCE_CONFIDENCE_THRESHOLD}% = flagged as unknown.
         Top-2 gap < {INFERENCE_MULTI_OBJECT_GAP}% = multiple objects warning.
         ''')
-    demo.launch(server_name='0.0.0.0', server_port=GRADIO_SERVER_PORT, share=False)
+    print(f'\nOpen http://localhost:{GRADIO_SERVER_PORT} in your browser')
+    print('Upload any image to classify it.\n')
+    demo.launch(server_name='127.0.0.1', server_port=GRADIO_SERVER_PORT, share=False)
 
 
 def main():
