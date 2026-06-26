@@ -131,11 +131,9 @@ def launch_gradio():
                 warning_output = gr.Textbox(label='Notes', placeholder='No warnings')
         submit_btn.click(fn=gradio_predict, inputs=image_input, outputs=[label_output, warning_output])
         gr.Markdown(f'''
-        **Model:** ResNet-20 (0.27M params) | **Test Accuracy:** {CURRENT_TEST_ACCURACY}%
-        **Training:** {NUM_EPOCHS} epochs, batch {BATCH_SIZE}, lr {LEARNING_RATE}, wd {WEIGHT_DECAY}
-        **Usage:** Upload a single-image photo. The model classifies it into one of 10 categories.
-        - Confidence below {INFERENCE_CONFIDENCE_THRESHOLD}% → the image may not belong to any CIFAR-10 class.
-        - Images are auto-resized to 32x32 before classification.
+        **How it works:** Upload a photo of a single object — like a cat, a dog, or a car — and the model will identify it.
+        **Limitations:** Images containing multiple objects (e.g., a cat and a bird together) cannot be classified correctly. Multi-object support is under development.
+        **Note:** Confidence below {INFERENCE_CONFIDENCE_THRESHOLD}% means the image may not contain any of the 10 supported categories. Images are auto-resized to 32x32.
         ''')
     print(f'\nOpen http://localhost:{GRADIO_SERVER_PORT} in your browser')
     print('Upload any image to classify it.\n')
