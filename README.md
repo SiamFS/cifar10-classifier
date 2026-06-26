@@ -1,81 +1,84 @@
 # CIFAR-10 Image Classification
 
-Deep learning image classification using PyTorch on the CIFAR-10 dataset. Built as part of the Trainee AI Engineer application for NITSOL Bangladesh Limited.
+Deep learning image classification using PyTorch on CIFAR-10. Built for NITSOL Bangladesh Limited Trainee AI Engineer application.
 
-## Dataset
+## Results — ResNet-20 (0.27M params)
 
-CIFAR-10: 60,000 32x32 color images across 10 classes.
+| Metric | Value |
+|--------|-------|
+| **Test Accuracy** | **92.88%** |
+| Mean ROC-AUC (OvR) | 0.9969 |
+| Mean Average Precision | 0.9788 |
+| Precision (macro) | 92.87% |
+| Recall (macro) | 92.88% |
+| F1 (macro) | 92.87% |
 
-| Split | Images | Description |
-|-------|--------|-------------|
-| Train | 45,000 | 90% of original training set (4,500/class) |
-| Val | 5,000 | 10% of original training set (500/class) |
-| Test | 10,000 | Pre-separated by CIFAR-10 (1,000/class) |
+### Per-Class Accuracy
+| Class | Accuracy |
+|-------|----------|
+| airplane | 93.70% |
+| automobile | 96.80% |
+| bird | 90.60% |
+| cat | 83.00% |
+| deer | 94.80% |
+| dog | 87.80% |
+| frog | 95.60% |
+| horse | 94.00% |
+| ship | 96.10% |
+| truck | 96.40% |
 
-| Class | Label |
-|-------|-------|
-| 0 | airplane |
-| 1 | automobile |
-| 2 | bird |
-| 3 | cat |
-| 4 | deer |
-| 5 | dog |
-| 6 | frog |
-| 7 | horse |
-| 8 | ship |
-| 9 | truck |
+## Model Architecture
+- **ResNet-20** adapted for CIFAR-10 (3x3 initial conv, no max pooling)
+- 3 stages: 16 → 32 → 64 channels
+- BatchNorm + Kaiming init
+- 0.27M parameters
 
-## Requirements
+## Data Preprocessing
+- **Train:** RandomCrop(32, padding=4) → RandomHorizontalFlip → RandAugment(N=2, M=14) → Normalize → RandomErasing(p=0.25)
+- **Val/Test:** Normalize only
+- Mean: (0.4914, 0.4822, 0.4465), Std: (0.2471, 0.2435, 0.2616)
 
-- Python 3.9+
-- PyTorch 2.0+
-- CUDA-compatible GPU (recommended)
+## Training Config
+| Parameter | Value |
+|-----------|-------|
+| Epochs | 200 |
+| Batch Size | 128 |
+| Optimizer | SGD + momentum 0.9 + nesterov |
+| Initial LR | 0.1 |
+| Weight Decay | 5e-4 |
+| Scheduler | CosineAnnealingLR |
+| Early Stop | patience=25, min_delta=0.01 |
+| AMP | Yes (Mixed Precision) |
+
+All hyperparameters configurable via `config.py`.
 
 ## Quick Start
-
-### 1. Setup
 ```bash
-python -m venv venv
-venv\Scripts\activate    # Windows
-source venv/bin/activate  # Linux/Mac
-python setup.py           # Auto-detects GPU, installs correct PyTorch
-```
-
-### 2. Train
-```bash
-python train.py
-```
-
-### 3. Evaluate
-```bash
-python evaluate.py
-```
-
-### 4. Inference (Web App)
-```bash
-python inference.py
-# Opens Gradio web interface at http://localhost:7860
+python -m venv venv && venv\Scripts\activate
+python setup.py       # Auto GPU detection + install PyTorch
+python train.py       # Train ResNet-20
+python evaluate.py    # Full evaluation + all plots
+python inference.py   # Gradio web UI
 ```
 
 ## Inference App
+- **Gradio** web UI: upload any image → top-3 predictions with confidence
+- Unknown class detection (confidence < 15%)
+- Multiple object detection (top-2 gap < 15%)
+- CLI mode: `python inference.py image.jpg`
 
-### Input
-- Any image file (JPG, PNG, BMP) — auto-resized to 32x32
-- Drag-and-drop or file upload via web UI
-
-### Output
-| Field | Description |
-|-------|-------------|
-| Predicted Class | Top-1 prediction (e.g. "dog") |
-| Confidence | Probability score (e.g. 94.7%) |
-| Top-3 | Top 3 predictions with confidence bars |
-
-**Example:** Upload a photo of a frog → output shows "frog — 97.2%"
-
-### Technology
-- **Gradio** — web UI framework for ML demos
-- **Docker** — containerized deployment
-- No database or Redis needed (stateless inference)
+## Visualizations
+| Plot | Description |
+|------|-------------|
+| ![Curves](results/plots/training_curves.png) | Training & validation loss/accuracy |
+| ![CM](results/plots/confusion_matrix.png) | Confusion matrix |
+| ![ROC](results/plots/roc_curves.png) | ROC curves per class |
+| ![PR](results/plots/precision_recall.png) | Precision-Recall curves |
+| ![Class](results/plots/per_class_accuracy.png) | Per-class accuracy |
+| ![Split](results/plots/data_split.png) | Data split distribution |
+| ![Dist](results/plots/class_distribution.png) | Class distribution |
+| ![LR](results/plots/lr_schedule.png) | LR schedule |
+| ![Aug](results/plots/augmentations.png) | Augmentation samples |
 
 ## Docker
 ```bash
@@ -84,79 +87,22 @@ docker run -p 7860:7860 cifar10-app
 ```
 
 ## Project Structure
-
 ```
 Cifar_10/
-├── README.md              # Project docs, setup, results (you are here)
-├── AGENTS.md              # Developer/agent instructions
-├── IMPLEMENTATION.md      # Full build plan, edge cases, tests
-├── circular.txt           # Job circular
-├── circular_extra.txt     # Extended circular details
-├── setup.py               # Auto GPU detection + PyTorch install
-├── requirements.txt       # Python dependencies
-├── Dockerfile             # Container for Hugging Face Spaces
-├── .gitignore             # Ignore venv, __pycache__, checkpoints
-│
-├── model.py               # ResNet architecture (CIFAR-adapted)
-├── train.py               # Training loop + hyperparameter grid search
-├── evaluate.py            # Metrics, confusion matrix, plots
-├── inference.py           # Gradio web UI + CLI fallback
-├── utils.py               # Data loading, preprocessing, augmentation
-│
-├── models/                # Saved .pt checkpoints (gitignored)
-├── results/
-│   ├── training_log.txt   # Full epoch-by-epoch log
-│   ├── experiment_log.csv # Structured metrics
-│   ├── evaluation_report.txt
-│   └── plots/             # All visualization PNGs
-└── examples/              # Sample images for inference testing
+├── config.py              # All hyperparameters (single source of truth)
+├── model.py               # ResNet-20 architecture
+├── utils.py               # Data loading, augmentation, plots
+├── train.py               # Training loop with AMP + early stopping
+├── evaluate.py            # Full evaluation + all metric plots
+├── inference.py           # Gradio web UI + CLI mode
+├── setup.py               # Auto GPU detection + install
+├── requirements.txt
+├── Dockerfile
+├── .gitignore
+├── models/                # Saved checkpoints
+└── results/
+    ├── training_log.txt   # Full epoch log
+    ├── experiment_log.csv # CSV metrics
+    ├── evaluation_report.txt
+    └── plots/             # 9 visualization PNGs
 ```
-
-## Model
-
-Uses a CIFAR-adapted ResNet architecture with:
-- 3x3 initial convolution (no 7x7 ImageNet conv)
-- 3 residual stages
-- Configurable depth (ResNet-20/32/44/56)
-
-Training includes:
-- RandAugment + CutMix/MixUp data augmentation
-- Cosine annealing learning rate schedule
-- Mixed precision (AMP) for GPU speedup
-- Early stopping with checkpoint saving
-- Full epoch-by-epoch logging to `results/training_log.txt`
-
-## Training Output (per epoch)
-
-```
-Epoch: 001/200 | LR: 0.1000 | Train Loss: 1.2345 | Train Acc: 56.78% | Val Loss: 1.0234 | Val Acc: 65.43% | Best: 65.43% | Time: 2.3s
-```
-
-## Performance
-
-### Model Comparison
-| Experiment | Model | Params | Accuracy | Precision | Recall | F1 |
-|------------|-------|--------|----------|-----------|--------|-----|
-| 1 | ResNet-20 | 0.27M | TBD | TBD | TBD | TBD |
-| 2 | ResNet-56 | 0.86M | TBD | TBD | TBD | TBD |
-
-### Hyperparameter Tuning
-| LR | WD | Optimizer | RandAug | CutMix | Val Acc |
-|----|-----|-----------|---------|--------|---------|
-| 0.1 | 5e-4 | SGD | N=2,M=14 | a=1.0 | TBD |
-| 0.05 | 5e-4 | SGD | N=2,M=14 | a=1.0 | TBD |
-| 0.1 | 1e-3 | SGD | N=2,M=14 | a=1.0 | TBD |
-| 0.1 | 5e-4 | AdamW | N=2,M=14 | a=1.0 | TBD |
-
-### Visualizations
-| Plot | Description |
-|------|-------------|
-| ![Curves](results/plots/training_curves.png) | Training & validation loss/accuracy |
-| ![LR](results/plots/lr_schedule.png) | Learning rate schedule |
-| ![CM](results/plots/confusion_matrix.png) | Confusion matrix (10x10) |
-| ![Class](results/plots/per_class_accuracy.png) | Per-class accuracy breakdown |
-| ![Aug](results/plots/augmentations.png) | Sample augmented training images |
-
-## License
-
-MIT

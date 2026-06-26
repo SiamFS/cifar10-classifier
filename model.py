@@ -1,4 +1,5 @@
 import torch.nn as nn
+from config import NUM_CLASSES
 
 
 class BasicBlock(nn.Module):
@@ -72,7 +73,7 @@ class CifarResNet(nn.Module):
         return x
 
 
-def resnet20(num_classes=10):
+def resnet20(num_classes=NUM_CLASSES):
     return CifarResNet(BasicBlock, [3, 3, 3], num_classes=num_classes)
 
 

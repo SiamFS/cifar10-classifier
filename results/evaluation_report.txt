@@ -17,3 +17,8 @@ Test Accuracy: 92.88%
     accuracy                         0.9288     10000
    macro avg     0.9287    0.9288    0.9287     10000
 weighted avg     0.9287    0.9288    0.9287     10000
+
+
+--- Additional Metrics ---
+Mean ROC-AUC (OvR): 0.9969
+Mean Average Precision: 0.9788

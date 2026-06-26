@@ -1,7 +1,6 @@
 import argparse
 import csv
 import time
-from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -12,12 +11,14 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from model import resnet20, count_parameters
-from utils import set_seed, get_dataloaders
-
-MODEL_DIR = Path('models')
-RESULTS_DIR = Path('results')
-PLOTS_DIR = RESULTS_DIR / 'plots'
+from model import resnet20
+from utils import set_seed, get_dataloaders, print_model_architecture
+from config import (
+    RANDOM_SEED, MODEL_DIR, RESULTS_DIR, PLOTS_DIR, BATCH_SIZE, NUM_WORKERS,
+    NUM_EPOCHS, LEARNING_RATE, WEIGHT_DECAY, MOMENTUM, OPTIMIZER,
+    SCHEDULER_ETA_MIN, EARLY_STOP_PATIENCE, EARLY_STOP_MIN_DELTA,
+    RANDAUG_NUM_OPS, RANDAUG_MAGNITUDE, RANDOM_ERASING_P,
+)
 
 
 def setup_gpu():
@@ -37,13 +38,10 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device, use_amp
     running_loss = 0.0
     correct = 0
     total = 0
-
     for inputs, targets in loader:
         inputs = inputs.to(device, memory_format=torch.channels_last, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
-
         optimizer.zero_grad()
-
         if use_amp:
             with autocast():
                 outputs = model(inputs)
@@ -56,12 +54,10 @@ def train_one_epoch(model, loader, criterion, optimizer, scaler, device, use_amp
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
-
         running_loss += loss.item()
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
-
     return running_loss / len(loader), 100. * correct / total
 
 
@@ -70,7 +66,6 @@ def validate(model, loader, criterion, device):
     running_loss = 0.0
     correct = 0
     total = 0
-
     with torch.no_grad():
         for inputs, targets in loader:
             inputs = inputs.to(device, non_blocking=True)
@@ -81,7 +76,6 @@ def validate(model, loader, criterion, device):
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
-
     return running_loss / len(loader), 100. * correct / total
 
 
@@ -108,7 +102,6 @@ def plot_curves(history, save_path):
     lrs = [h['lr'] for h in history]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-
     ax1.plot(epochs, train_loss, 'b-', label='Train Loss', linewidth=1)
     ax1.plot(epochs, val_loss, 'r-', label='Val Loss', linewidth=1)
     ax1.set_xlabel('Epoch')
@@ -116,7 +109,6 @@ def plot_curves(history, save_path):
     ax1.set_title('Training & Validation Loss')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
-
     ax2.plot(epochs, train_acc, 'b-', label='Train Acc', linewidth=1)
     ax2.plot(epochs, val_acc, 'r-', label='Val Acc', linewidth=1)
     ax2.set_xlabel('Epoch')
@@ -124,7 +116,6 @@ def plot_curves(history, save_path):
     ax2.set_title('Training & Validation Accuracy')
     ax2.legend()
     ax2.grid(True, alpha=0.3)
-
     plt.tight_layout()
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path, dpi=150)
@@ -147,7 +138,6 @@ def train(args):
     PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
     log_file = RESULTS_DIR / 'training_log.txt'
-
     def log(msg):
         print(msg)
         with open(log_file, 'a', encoding='utf-8') as f:
@@ -157,16 +147,17 @@ def train(args):
     log('=' * 70)
     log('  CIFAR-10 Training: ResNet-20')
     log('=' * 70)
-    log(f'  Epochs: {args.epochs} | Batch: {args.batch_size} | LR: {args.lr}')
-    log(f'  Weight Decay: {args.weight_decay} | Optimizer: {args.optimizer}')
+    log(f'  Config: epochs={args.epochs} | batch={args.batch_size} | lr={args.lr}')
+    log(f'  Optimizer: {args.optimizer} | wd={args.weight_decay} | momentum={MOMENTUM}')
     log(f'  Scheduler: CosineAnnealingLR (T_max={args.epochs})')
     log(f'  Early Stop: patience={args.patience} | min_delta={args.min_delta}')
+    log(f'  Augmentation: RandAugment(N={RANDAUG_NUM_OPS},M={RANDAUG_MAGNITUDE}) + RandomErasing(p={RANDOM_ERASING_P})')
     log('-' * 70)
 
-    set_seed(42)
+    set_seed(RANDOM_SEED)
     device, use_amp = setup_gpu()
 
-    train_loader, val_loader, _ = get_dataloaders(batch_size=args.batch_size, num_workers=4)
+    train_loader, val_loader, _ = get_dataloaders(batch_size=args.batch_size, num_workers=NUM_WORKERS)
     log(f'  Data: {len(train_loader.dataset)} train | {len(val_loader.dataset)} val')
     log('-' * 70)
 
@@ -174,21 +165,18 @@ def train(args):
     if use_amp:
         model = model.to(memory_format=torch.channels_last)
 
-    params = count_parameters(model)
+    params = print_model_architecture(model)
     log(f'  Model: ResNet-20 | {params/1e6:.2f}M params | AMP: {use_amp}')
     log('-' * 70)
 
     criterion = nn.CrossEntropyLoss()
 
     if args.optimizer == 'sgd':
-        optimizer = optim.SGD(
-            model.parameters(), lr=args.lr, momentum=0.9,
-            weight_decay=args.weight_decay, nesterov=True
-        )
+        optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=MOMENTUM, weight_decay=args.weight_decay, nesterov=True)
     else:
         optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-    scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0)
+    scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=SCHEDULER_ETA_MIN)
     scaler = GradScaler() if use_amp else None
 
     best_acc = 0.0
@@ -252,7 +240,7 @@ def train(args):
 
     log('-' * 70)
     log('  Training complete!')
-    log(f'  Best Val Acc: {best_acc:.2f}% | Test: run evaluate.py')
+    log(f'  Best Val Acc: {best_acc:.2f}%')
     log(f'  Total Time: {total_time/60:.1f} min')
     log('=' * 70)
 
@@ -262,14 +250,14 @@ def train(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CIFAR-10 Training - ResNet-20')
-    parser.add_argument('--epochs', type=int, default=200)
-    parser.add_argument('--batch-size', type=int, default=128)
-    parser.add_argument('--lr', type=float, default=0.1)
-    parser.add_argument('--weight-decay', type=float, default=5e-4)
-    parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adamw'])
-    parser.add_argument('--patience', type=int, default=25)
-    parser.add_argument('--min-delta', type=float, default=0.01)
+    parser = argparse.ArgumentParser(description='CIFAR-10 Training: ResNet-20')
+    parser.add_argument('--epochs', type=int, default=NUM_EPOCHS)
+    parser.add_argument('--batch-size', type=int, default=BATCH_SIZE)
+    parser.add_argument('--lr', type=float, default=LEARNING_RATE)
+    parser.add_argument('--weight-decay', type=float, default=WEIGHT_DECAY)
+    parser.add_argument('--optimizer', type=str, default=OPTIMIZER, choices=['sgd', 'adamw'])
+    parser.add_argument('--patience', type=int, default=EARLY_STOP_PATIENCE)
+    parser.add_argument('--min-delta', type=float, default=EARLY_STOP_MIN_DELTA)
     args = parser.parse_args()
     train(args)
 
