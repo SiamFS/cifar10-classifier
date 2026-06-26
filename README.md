@@ -45,6 +45,22 @@ python inference.py
 - NVIDIA GPU recommended (CPU also works but is slower)
 - Windows / Linux / Mac
 
+### Customizing Settings
+All settings live in one file: **`config.py`** — no need to edit individual scripts.
+
+| Setting | Config Key | Default | What It Controls |
+|---------|-----------|---------|-----------------|
+| Epochs | `NUM_EPOCHS` | 200 | How many times the model sees the dataset |
+| Batch Size | `BATCH_SIZE` | 128 | Images processed at once |
+| Learning Rate | `LEARNING_RATE` | 0.1 | How fast the model learns |
+| Weight Decay | `WEIGHT_DECAY` | 5e-4 | Regularization strength |
+| Validation Split | `TRAIN_VAL_SPLIT` | 0.10 (10%) | How much data to hold back for validation |
+| Early Stop Patience | `EARLY_STOP_PATIENCE` | 25 | Stop if no improvement after N epochs |
+| RandAugment | `RANDAUG_MAGNITUDE` | 14 | Strength of data augmentation |
+| Random Erasing | `RANDOM_ERASING_P` | 0.25 | Probability of randomly blacking out image regions |
+
+Example: to train faster with a smaller batch, change `BATCH_SIZE = 64` in `config.py` and re-run `python train.py`. All scripts read from this file automatically.
+
 ---
 
 ## Dataset: CIFAR-10
@@ -141,6 +157,8 @@ CIFAR-10 has only 50,000 training images. That sounds like a lot, but deep learn
 | Step | Why |
 |------|-----|
 | **Normalize Only** | We evaluate the model on clean, un-augmented images. This is the fair way to measure true performance |
+
+> **Note:** CIFAR-10 images are only **32x32 pixels** — extremely small. This is why uploaded images look blurry when resized for inference. The model was trained on these tiny images, so lowering the resolution is necessary for accurate predictions. This is a property of the dataset, not a bug.
 
 ![Augmentation Samples](results/plots/augmentations.png)
 
