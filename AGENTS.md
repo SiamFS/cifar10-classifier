@@ -136,9 +136,19 @@ pip install ruff; ruff check .
 - Keep code modular: separate files for model, training, evaluation, inference, utils
 - Test before committing
 
+## Reproducibility
+- Seed set to 42 for Python, NumPy, PyTorch, and CUDA
+- cuDNN benchmark ON (fastest algorithm per run — results may vary 0.1-0.3% on different GPU architectures)
+- Shuffled train/val split (randomized, balanced ~500/class in val)
+- Deterministic data loading with fixed transforms
+- To get exact same results: set `NUM_EPOCHS=3` in config.py for quick smoke test
+
+## Why Val Accuracy > Train Accuracy (Normal)
+Training accuracy is measured on **aggressively augmented images** (RandAugment + RandomErasing). Validation accuracy is measured on **clean, non-augmented images**. The training task is deliberately harder → lower reported train accuracy. This gap proves augmentation is working and will close as the model converges.
+
 ## Security
-- `.gitignore` must exclude: `venv/`, `__pycache__/`, `models/*.pt`, `*.pyc`, `.env`
+- `.gitignore` must exclude: `venv/`, `__pycache__/`, `models/*.pt`, `*.pyc`, `.env`, `data/`, `*.tar.gz`
 - Never commit API keys, tokens, or passwords
 - Gradio `server_name="0.0.0.0"` only in Docker (internal port); set `share=False` by default
-- Model weights file (`models/*.pt`) tested only — no model poisoning risk
+- Model weights file (`models/*.pt`) trained locally — no model poisoning risk
 - `setup.py` uses hardcoded commands (nvidia-smi, pip install) — no injection vectors
