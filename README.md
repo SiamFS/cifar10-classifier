@@ -9,10 +9,11 @@ A deep learning project that trains a neural network to recognize 10 different t
 | Metric | Score |
 |--------|-------|
 | Accuracy | 93.17% |
-| Mean ROC-AUC | 0.996 |
-| Mean Average Precision | 0.979 |
+| Mean ROC-AUC | 0.9969 |
+| Mean Average Precision | 0.9792 |
 | Precision (Macro) | 93.19% |
 | Recall (Macro) | 93.17% |
+| F1 (Macro) | 93.17% |
 
 **🚀 Try it Live: [huggingface.co/spaces/SiamFS/cifar10-classifier](https://huggingface.co/spaces/SiamFS/cifar10-classifier)**
 
