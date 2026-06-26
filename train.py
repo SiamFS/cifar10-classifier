@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import CosineAnnealingLR
 from torch.cuda.amp import autocast, GradScaler
 import matplotlib
 matplotlib.use('Agg')
@@ -159,7 +159,7 @@ def train(args):
     log('=' * 70)
     log(f'  Epochs: {args.epochs} | Batch: {args.batch_size} | LR: {args.lr}')
     log(f'  Weight Decay: {args.weight_decay} | Optimizer: {args.optimizer}')
-    log(f'  Scheduler: CosineAnnealingWarmRestarts (T_0={args.t0}, T_mult={args.t_mult})')
+    log(f'  Scheduler: CosineAnnealingLR (T_max={args.epochs})')
     log(f'  Early Stop: patience={args.patience} | min_delta={args.min_delta}')
     log('-' * 70)
 
@@ -188,7 +188,7 @@ def train(args):
     else:
         optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
-    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=args.t0, T_mult=args.t_mult, eta_min=0)
+    scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs, eta_min=0)
     scaler = GradScaler() if use_amp else None
 
     best_acc = 0.0
@@ -270,8 +270,6 @@ def main():
     parser.add_argument('--optimizer', type=str, default='sgd', choices=['sgd', 'adamw'])
     parser.add_argument('--patience', type=int, default=25)
     parser.add_argument('--min-delta', type=float, default=0.01)
-    parser.add_argument('--t0', type=int, default=50, help='CosineAnnealingWarmRestarts T_0')
-    parser.add_argument('--t-mult', type=int, default=2, help='CosineAnnealingWarmRestarts T_mult')
     args = parser.parse_args()
     train(args)
 
