@@ -8,17 +8,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
-from model import resnet20, resnet32, resnet56
+from model import resnet20
 from utils import get_dataloaders, get_class_names, set_seed
 
-MODEL_DIR = Path('models')
 RESULTS_DIR = Path('results')
 PLOTS_DIR = RESULTS_DIR / 'plots'
 
 
-def load_model(checkpoint_path, model_name, device):
-    model_fns = {'resnet20': resnet20, 'resnet32': resnet32, 'resnet56': resnet56}
-    model = model_fns[model_name]()
+def load_model(checkpoint_path, device):
+    model = resnet20()
     checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=True)
     model.load_state_dict(checkpoint['model_state_dict'])
     model = model.to(device)
@@ -31,7 +29,7 @@ def plot_confusion_matrix(cm, class_names, save_path):
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=class_names, yticklabels=class_names)
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    plt.title('Confusion Matrix - CIFAR-10 Test Set')
+    plt.title('Confusion Matrix — CIFAR-10 Test Set')
     plt.tight_layout()
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path, dpi=150)
@@ -47,11 +45,9 @@ def plot_per_class_accuracy(class_acc, class_names, save_path):
     plt.title('Per-Class Accuracy on CIFAR-10 Test Set')
     plt.xticks(rotation=45)
     plt.ylim(0, 105)
-
     for bar, acc in zip(bars, class_acc):
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 1, f'{acc:.1f}%',
                  ha='center', va='bottom', fontsize=9)
-
     plt.tight_layout()
     save_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(save_path, dpi=150)
@@ -66,7 +62,7 @@ def evaluate(args):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
     print('=' * 70)
-    print('  CIFAR-10 Evaluation')
+    print('  CIFAR-10 Evaluation — ResNet-20')
     print('=' * 70)
 
     _, _, test_loader = get_dataloaders(batch_size=args.batch_size, num_workers=4)
@@ -75,10 +71,11 @@ def evaluate(args):
     checkpoint_path = Path(args.checkpoint)
     if not checkpoint_path.exists():
         print(f'  [ERROR] Checkpoint not found: {checkpoint_path}')
+        print(f'  Run "python train.py" first.')
         return
 
-    model, training_best = load_model(checkpoint_path, args.model, device)
-    print(f'  Model: {args.model} | Checkpoint: {checkpoint_path}')
+    model, training_best = load_model(checkpoint_path, device)
+    print(f'  Checkpoint: {checkpoint_path}')
     if training_best:
         print(f'  Training best val acc: {training_best:.2f}%')
 
@@ -108,8 +105,7 @@ def evaluate(args):
 
     report_path = RESULTS_DIR / 'evaluation_report.txt'
     with open(report_path, 'w', encoding='utf-8') as f:
-        f.write('CIFAR-10 Evaluation Report\n')
-        f.write(f'Model: {args.model}\n')
+        f.write('CIFAR-10 Evaluation Report — ResNet-20\n')
         f.write(f'Test Accuracy: {test_acc * 100:.2f}%\n')
         f.write('=' * 70 + '\n')
         f.write(report)
@@ -138,13 +134,11 @@ def evaluate(args):
     print('=' * 70)
 
     print(f'\nFull report saved to: {report_path}')
-
     return test_acc
 
 
 def main():
     parser = argparse.ArgumentParser(description='CIFAR-10 Evaluation')
-    parser.add_argument('--model', type=str, default='resnet20', choices=['resnet20', 'resnet32', 'resnet56'])
     parser.add_argument('--checkpoint', type=str, default='models/best.pt')
     parser.add_argument('--batch-size', type=int, default=128)
     args = parser.parse_args()

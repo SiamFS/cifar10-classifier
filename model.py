@@ -76,22 +76,14 @@ def resnet20(num_classes=10):
     return CifarResNet(BasicBlock, [3, 3, 3], num_classes=num_classes)
 
 
-def resnet32(num_classes=10):
-    return CifarResNet(BasicBlock, [5, 5, 5], num_classes=num_classes)
-
-
-def resnet56(num_classes=10):
-    return CifarResNet(BasicBlock, [9, 9, 9], num_classes=num_classes)
-
-
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
 if __name__ == '__main__':
-    for name, fn in [('resnet20', resnet20), ('resnet32', resnet32), ('resnet56', resnet56)]:
-        model = fn()
-        params = count_parameters(model)
-        x = __import__('torch').randn(2, 3, 32, 32)
-        out = model(x)
-        print(f'{name}: {params/1e6:.2f}M params, output shape: {out.shape}')
+    model = resnet20()
+    params = count_parameters(model)
+    import torch
+    x = torch.randn(2, 3, 32, 32)
+    out = model(x)
+    print(f'resnet20: {params/1e6:.2f}M params, output shape: {out.shape}')
