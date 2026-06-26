@@ -14,7 +14,7 @@ A deep learning project that trains a neural network to recognize 10 different t
 | Precision (Macro) | 93.19% |
 | Recall (Macro) | 93.17% |
 
-**[🚀 Try it Live →](https://huggingface.co/spaces/SiamFS/cifar10-classifier)**
+**🚀 Try it Live: [huggingface.co/spaces/SiamFS/cifar10-classifier](https://huggingface.co/spaces/SiamFS/cifar10-classifier)**
 
 ![Web App](results/plots/web_app.png)
 
