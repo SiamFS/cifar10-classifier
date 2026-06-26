@@ -5,3 +5,5 @@ models/*.pt
 .env
 .DS_Store
 *.egg-info/
+data/
+*.tar.gz
